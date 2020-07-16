@@ -47,25 +47,28 @@ export function drawBoard(ctx, size, lineColor="#000000", padding=10) {
         }
 
     }
-    drawCircles(ctx, ctx.canvas.width, squareWidth, padding);
+    drawStarPoints(ctx, ctx.canvas.width, squareWidth, padding);
     drawTestStones(ctx, squareWidth);
 }
 
-function drawCircles(ctx, size, squareWidth, padding) {
-    drawCircle(ctx, (squareWidth * 4) + padding, (squareWidth * 4) + padding); // top left
-    drawCircle(ctx, size / 2, (squareWidth * 4) + padding); // top middle
-    drawCircle(ctx, size - (squareWidth * 4) - padding, (squareWidth * 4) + padding); // top right
+function drawStarPoints(ctx, size, squareWidth, padding) {
 
-    drawCircle(ctx, (squareWidth * 4) + padding, size / 2); // middle left
-    drawCircle(ctx, size / 2, size / 2); // middle
-    drawCircle(ctx, size - (squareWidth * 4) - padding, size / 2); // middle right
+    // TODO: draw appropriate komoku (star points) for board size (this only covers 19x19)
 
-    drawCircle(ctx, (squareWidth * 4) + padding, size - (squareWidth * 4) - padding); // lower left
-    drawCircle(ctx, size / 2, size - (squareWidth * 4) - padding); // lower middle
-    drawCircle(ctx, size - (squareWidth * 4) - padding, size - (squareWidth * 4) - padding); // lower right
+    drawStarPoint(ctx, (squareWidth * 4) + padding, (squareWidth * 4) + padding); // top left
+    drawStarPoint(ctx, size / 2, (squareWidth * 4) + padding); // top middle
+    drawStarPoint(ctx, size - (squareWidth * 4) - padding, (squareWidth * 4) + padding); // top right
+
+    drawStarPoint(ctx, (squareWidth * 4) + padding, size / 2); // middle left
+    drawStarPoint(ctx, size / 2, size / 2); // middle
+    drawStarPoint(ctx, size - (squareWidth * 4) - padding, size / 2); // middle right
+
+    drawStarPoint(ctx, (squareWidth * 4) + padding, size - (squareWidth * 4) - padding); // lower left
+    drawStarPoint(ctx, size / 2, size - (squareWidth * 4) - padding); // lower middle
+    drawStarPoint(ctx, size - (squareWidth * 4) - padding, size - (squareWidth * 4) - padding); // lower right
 }
 
-function drawCircle(ctx, x, y) {
+function drawStarPoint(ctx, x, y) {
     ctx.beginPath();
     ctx.arc(x, y, 4, 0, 2 * Math.PI); // TODO: dynamically set circle radius, especially for smaller boards
     ctx.stroke();
