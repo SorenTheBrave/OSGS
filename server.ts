@@ -1,7 +1,6 @@
 import { serve, ServerRequest } from "https://deno.land/std/http/server.ts"
 
 async function serveFile(req: ServerRequest, filePath: string, contentType?: string) {
-  console.log(filePath);
   const [file, fileInfo] = await Promise.all([Deno.open(filePath), Deno.stat(filePath)]);
   const headers = new Headers();
   headers.set("content-length", fileInfo.size.toString());
@@ -22,8 +21,8 @@ async function main(): Promise<void> {
     try {
       if (req.url === '/') {
         await serveFile(req, "./www/html/index.html");
-      } else if (req.url === "/board") {
-        await serveFile(req, "./www/html/board.html");
+      } else if (req.url === "/boardtest") {
+        await serveFile(req, "./www/html/board_test.html");
       } else if (req.url.match(/\/styles\/.*/)) {
         await serveFile(req, `.${req.url}`, "text/css")
       } else if (req.url.match(/\/modules\/.*/) || req.url.match(/\/scripts\/.*/) || req.url.match(/\/config\/.*/)) {

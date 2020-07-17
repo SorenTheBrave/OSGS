@@ -1,3 +1,5 @@
+import {Globals} from "../config/globals.js";
+
 const STONE =  {
     WHITE: 1,
     BLACK: 2
@@ -7,14 +9,14 @@ const STONE =  {
    Draws a stone with the given color and radius at the given coordinates x, y
    (with optional padding) using the given 2d canvas context
  */
-function drawStone(color, ctx, x, y, r, padding=10) {
+function drawStone(color, ctx, x, y, r, padding, stoneGradientRadii, stoneGradientOffset) {
     let gradient = ctx.createRadialGradient(
-        x,
-        y,
-        2,
-        x,
-        y,
-        25
+        x + (padding - stoneGradientOffset),
+        y + (padding - stoneGradientOffset),
+        stoneGradientRadii[0],
+        x + (padding - stoneGradientOffset),
+        y + (padding - stoneGradientOffset),
+        stoneGradientRadii[1]
     );
 
     if (color === STONE.WHITE) {

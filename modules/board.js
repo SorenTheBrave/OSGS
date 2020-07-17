@@ -10,19 +10,23 @@ for (let i = 0; i < STANDARD_GOBAN.length; i++) {
     }
 }*/
 
-/* draws a board of the given size and padding using the given 2d canvas context */
-export function drawBoard(ctx, size, lineColor="#000000", padding=10) {
+/* draws a board of the given size using the given 2d canvas context */
+export function drawBoard(
+    ctx,
+    canvasSize,
+    boardParams=Globals.GOBAN_BOARDS.STANDARD,
+    lineColor="#000000"
+) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-    ctx.canvas.width = size > Globals.MAX_BOARD_SIZE
-        ? Globals.MAX_BOARD_SIZE
-        : size;
-    ctx.canvas.height = size > Globals.MAX_BOARD_SIZE
-        ? Globals.MAX_BOARD_SIZE
-        : size;
+    ctx.canvas.height = canvasSize > document.getElementById("boardContainer").clientHeight
+        ? document.getElementById("boardContainer").clientHeight
+        : canvasSize;
+    ctx.canvas.width = ctx.canvas.height;
     ctx.strokeStyle = lineColor;
     ctx.fillStyle = lineColor;
-    const squareWidth = (ctx.canvas.width - (2 * padding)) / (Globals.STANDARD_GOBAN_SIZE - 1)
-    for (let i = 0; i <= Globals.STANDARD_GOBAN_SIZE; i ++) {
+    const squareWidth = (ctx.canvas.width) / (boardParams.DIMENSION - 1 + (2 * Globals.PADDING_MULTIPLIER));
+    const padding = Globals.PADDING_MULTIPLIER * squareWidth; // this many squares worth of padding to the edge of the board
+    for (let i = 0; i <= boardParams.DIMENSION; i ++) {
         // start in the middle of the canvas and alternate outwards. first vertically, then horizontally.
         if (i % 2 === 0) {
             ctx.beginPath()
@@ -47,36 +51,59 @@ export function drawBoard(ctx, size, lineColor="#000000", padding=10) {
         }
 
     }
-    drawCircles(ctx, ctx.canvas.width, squareWidth, padding);
-    drawTestStones(ctx, squareWidth);
+    drawStarPoints(ctx, ctx.canvas.width, boardParams.DIMENSION, squareWidth, padding);
+    drawTestStones(ctx, squareWidth, padding, boardParams.STONE_GRADIENT_RADII, boardParams.STONE_GRADIENT_OFFSET);
 }
 
-function drawCircles(ctx, size, squareWidth, padding) {
-    drawCircle(ctx, (squareWidth * 4) + padding, (squareWidth * 4) + padding); // top left
-    drawCircle(ctx, size / 2, (squareWidth * 4) + padding); // top middle
-    drawCircle(ctx, size - (squareWidth * 4) - padding, (squareWidth * 4) + padding); // top right
+// TODO: refactor this somehow?
+function drawStarPoints(ctx, size, dimension, squareWidth, padding) {
+    switch (dimension) {
+        case 19:
+            drawCircle(ctx, (squareWidth * 4) + padding, (squareWidth * 4) + padding); // top left
+            drawCircle(ctx, size / 2, (squareWidth * 4) + padding); // top middle
+            drawCircle(ctx, size - (squareWidth * 4) - padding, (squareWidth * 4) + padding); // top right
 
-    drawCircle(ctx, (squareWidth * 4) + padding, size / 2); // middle left
-    drawCircle(ctx, size / 2, size / 2); // middle
-    drawCircle(ctx, size - (squareWidth * 4) - padding, size / 2); // middle right
+            drawCircle(ctx, (squareWidth * 4) + padding, size / 2); // middle left
+            drawCircle(ctx, size / 2, size / 2); // middle
+            drawCircle(ctx, size - (squareWidth * 4) - padding, size / 2); // middle right
 
-    drawCircle(ctx, (squareWidth * 4) + padding, size - (squareWidth * 4) - padding); // lower left
-    drawCircle(ctx, size / 2, size - (squareWidth * 4) - padding); // lower middle
-    drawCircle(ctx, size - (squareWidth * 4) - padding, size - (squareWidth * 4) - padding); // lower right
+            drawCircle(ctx, (squareWidth * 4) + padding, size - (squareWidth * 4) - padding); // lower left
+            drawCircle(ctx, size / 2, size - (squareWidth * 4) - padding); // lower middle
+            drawCircle(ctx, size - (squareWidth * 4) - padding, size - (squareWidth * 4) - padding); // lower right
+            break;
+        case 13:
+            drawCircle(ctx, (squareWidth * 3) + padding, (squareWidth * 3) + padding); // top left
+            drawCircle(ctx, size - (squareWidth * 3) - padding, (squareWidth * 3) + padding); // top right
+            drawCircle(ctx, size / 2, size / 2); // middle
+            drawCircle(ctx, (squareWidth * 3) + padding, size - (squareWidth * 3) - padding); // bottom left
+            drawCircle(ctx, size - (squareWidth * 3) - padding, size - (squareWidth * 3) - padding); // bottom right
+            break;
+        case 9:
+            drawCircle(ctx, (squareWidth * 2) + padding, (squareWidth * 2) + padding); // top left
+            drawCircle(ctx, size - (squareWidth * 2) - padding, (squareWidth * 2) + padding); // top right
+            drawCircle(ctx, size / 2, size / 2); // middle
+            drawCircle(ctx, (squareWidth * 2) + padding, size - (squareWidth * 2) - padding); // bottom left
+            drawCircle(ctx, size - (squareWidth * 2) - padding, size - (squareWidth * 2) - padding); // bottom right
+            break;
+        default:
+            break;
+    }
 }
 
 function drawCircle(ctx, x, y) {
     ctx.beginPath();
-    ctx.arc(x, y, 4, 0, 2 * Math.PI); // TODO: dynamically set circle radius, especially for smaller boards
+    ctx.arc(x, y, 3, 0, 2 * Math.PI); // TODO: dynamically set circle radius, especially for smaller boards
     ctx.stroke();
     ctx.fill();
 }
 
-function drawTestStones(ctx, squareWidth) {
+function drawTestStones(ctx, squareWidth, padding, stoneGradientRadii, stoneGradientOffset) {
     // just drawing some random stones
-    drawStone(STONE.BLACK, ctx, squareWidth, squareWidth, squareWidth / 2);
-    drawStone(STONE.WHITE, ctx, 2 * squareWidth, squareWidth, squareWidth / 2);
-    drawStone(STONE.BLACK, ctx, squareWidth, squareWidth * 2, squareWidth / 2);
-    drawStone(STONE.WHITE, ctx, 2 * squareWidth, 2 * squareWidth, squareWidth / 2);
-    drawStone(STONE.BLACK, ctx, 2 * squareWidth, 3 * squareWidth, squareWidth / 2);
+    drawStone(STONE.BLACK, ctx, squareWidth, squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
+    drawStone(STONE.BLACK, ctx, 0, 0, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
+    drawStone(STONE.WHITE, ctx, 0, squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
+    drawStone(STONE.WHITE, ctx, 2 * squareWidth, squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
+    drawStone(STONE.BLACK, ctx, squareWidth, squareWidth * 2, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
+    drawStone(STONE.WHITE, ctx, 2 * squareWidth, 2 * squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
+    drawStone(STONE.BLACK, ctx, 2 * squareWidth, 3 * squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
 }
