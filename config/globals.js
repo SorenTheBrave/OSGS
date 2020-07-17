@@ -16,9 +16,5 @@ export const Globals = {
             STONE_GRADIENT_OFFSET: 15
         }
     },
-    STANDARD_GOBAN_DIMENSION: 19,
-    SMALL_GOBAN_DIMENSION: 9,
     PADDING_MULTIPLIER: 1.5,
-    MAX_BOARD_SIZE: 600,
-    DEFAULT_BOARD_PADDING: 50,
 }
