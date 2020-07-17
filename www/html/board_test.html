@@ -18,9 +18,14 @@
                 <option value="19" selected>19x19</option>
                 <option value="13">13x13</option>
                 <option value="9">9x9</option>
+            </select>
+            <span id="mousePos"></span>
         </div>
-        </select>
     </div>
     <script type="module" src="../../scripts/board_test.js"></script>
+    <script type="module">
+        import { TestBoard } from "../../scripts/board_test.js";
+        const testBoard = new TestBoard("boardCanvas", "boardContainer", "style", "dimension");
+    </script>
 </body>
 </html>

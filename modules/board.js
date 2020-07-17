@@ -1,5 +1,5 @@
 import { Globals } from '../config/globals.js'
-import {drawStone, STONE} from "./stone.js";
+import { drawStone, STONE } from "./stone.js";
 
 /* TODO: connect with the UI representation
 let STANDARD_GOBAN = new Array(19);
@@ -10,8 +10,24 @@ for (let i = 0; i < STANDARD_GOBAN.length; i++) {
     }
 }*/
 
+const BOARD_STYLES = {
+    MAPLE: {
+        background: "#edb87b",
+        stroke: "#000000"
+    },
+    ROSEWOOD: {
+        //background: "#36050b",
+        background: "#6f362c",
+        stroke: "#ffffff"
+    },
+    MAHOGANY: {
+        background: "#b36430",
+        stroke: "#000000"
+    }
+}
+
 /* draws a board of the given size using the given 2d canvas context */
-export function drawBoard(
+function drawBoard(
     ctx,
     canvasSize,
     boardParams=Globals.GOBAN_BOARDS.STANDARD,
@@ -53,6 +69,7 @@ export function drawBoard(
     }
     drawStarPoints(ctx, ctx.canvas.width, boardParams.DIMENSION, squareWidth, padding);
     drawTestStones(ctx, squareWidth, padding, boardParams.STONE_GRADIENT_RADII, boardParams.STONE_GRADIENT_OFFSET);
+    return squareWidth;
 }
 
 // TODO: refactor this somehow?
@@ -107,3 +124,5 @@ function drawTestStones(ctx, squareWidth, padding, stoneGradientRadii, stoneGrad
     drawStone(STONE.WHITE, ctx, 2 * squareWidth, 2 * squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
     drawStone(STONE.BLACK, ctx, 2 * squareWidth, 3 * squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
 }
+
+export { BOARD_STYLES, drawBoard }
