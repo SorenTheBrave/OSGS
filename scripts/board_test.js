@@ -55,6 +55,7 @@ export class TestBoard {
         }
         canvas.style.setProperty("background-color", currentWood);
         document.getElementById("boardCanvas").innerHTML = "";
+        document.getElementById(this.turnId).value = "white";
         this.board = new Board(
             document.getElementById("boardCanvas"),
             document.getElementById("boardContainer"),
@@ -78,6 +79,7 @@ export class TestBoard {
                 break;
         }
         document.getElementById("boardCanvas").innerHTML = "";
+        document.getElementById(this.turnId).value = "white";
         this.board = new Board(
             document.getElementById("boardCanvas"),
             document.getElementById("boardContainer"),
