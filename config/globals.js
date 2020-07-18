@@ -17,4 +17,5 @@ export const Globals = {
         }
     },
     PADDING_MULTIPLIER: 1.5,
+    PREVIEW_STONE_OPACITY: 0.5
 }
