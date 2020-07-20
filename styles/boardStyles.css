@@ -56,13 +56,27 @@ select {
 
 
 canvas {
-    /*position: absolute;*/
-    /*margin-left: auto;*/
-    /*margin-right: auto;*/
-    /*left: 0;*/
-    /*right: 0;*/
-    cursor: grabbing;
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
     justify-content: center;
+}
+
+#boardParams {
+    position: absolute;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    bottom: 0;
+    justify-content: center;
+}
+
+canvas.board {
     background-color: #edb87b;
     box-shadow: 0 1px 1px rgba(0,0,0,0.25),
     0 2px 2px rgba(0,0,0,0.20),
@@ -70,6 +84,11 @@ canvas {
     0 8px 8px rgba(0,0,0,0.10),
     0 16px 16px rgba(0,0,0,0.05);
     animation: fade-in 0.2s ease-in;
+}
+
+canvas.move-preview {
+    cursor: grabbing;
+    background-color: transparent;
 }
 
 select {

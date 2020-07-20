@@ -14,6 +14,7 @@ export class TestBoard {
         this.turnId = turnId;
         this.board = new Board(
             document.getElementById("boardCanvas"),
+            document.getElementById("movePreviewCanvas"),
             document.getElementById("boardContainer"),
             Globals.GOBAN_BOARDS.STANDARD,
             BOARD_STYLES.MAPLE.stroke
@@ -22,17 +23,17 @@ export class TestBoard {
         let styleSelect = document.getElementById(this.styleId)
         let objectScope = this;
         if (styleSelect) {
-            styleSelect.addEventListener("change", function() { objectScope.changeBoardStyle(objectScope.board.ctx, objectScope.board.canvas, styleSelect) });
+            styleSelect.addEventListener("change", function() { objectScope.changeBoardStyle(objectScope.board.boardCanvasContext, objectScope.board.boardCanvas, styleSelect) });
         }
 
         let dimensionSelect = document.getElementById(this.dimensionId)
         if (dimensionSelect) {
-            dimensionSelect.addEventListener("change", function() { objectScope.changeBoardDimensions(objectScope.board.ctx, objectScope.board.canvas, dimensionSelect) });
+            dimensionSelect.addEventListener("change", function() { objectScope.changeBoardDimensions(objectScope.board.boardCanvasContext, objectScope.board.boardCanvas, dimensionSelect) });
         }
 
         let turnSelect = document.getElementById(this.turnId)
         if (turnSelect) {
-            turnSelect.addEventListener("change", function() { objectScope.changeBoardTurn(objectScope.board.ctx, objectScope.board.canvas, turnSelect) });
+            turnSelect.addEventListener("change", function() { objectScope.changeBoardTurn(objectScope.board.boardCanvasContext, objectScope.board.boardCanvas, turnSelect) });
         }
     }
 
@@ -58,6 +59,7 @@ export class TestBoard {
         document.getElementById(this.turnId).value = "white";
         this.board = new Board(
             document.getElementById("boardCanvas"),
+            document.getElementById("movePreviewCanvas"),
             document.getElementById("boardContainer"),
             currentBoard,
             currentStroke
@@ -78,10 +80,10 @@ export class TestBoard {
             default:
                 break;
         }
-        document.getElementById("boardCanvas").innerHTML = "";
         document.getElementById(this.turnId).value = "white";
         this.board = new Board(
             document.getElementById("boardCanvas"),
+            document.getElementById("movePreviewCanvas"),
             document.getElementById("boardContainer"),
             currentBoard,
             currentStroke

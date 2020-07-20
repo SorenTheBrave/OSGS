@@ -2,12 +2,37 @@ import { Globals } from '../config/globals.js'
 import { drawStone, STONE } from "./stone.js";
 
 
-let STANDARD_GOBAN = new Array(19);
-for (let i = 0; i < STANDARD_GOBAN.length; i++) {
-    STANDARD_GOBAN[i] = new Array(19);
-    for (let j = 0; j < STANDARD_GOBAN[i].length; j++) {
-        STANDARD_GOBAN[i][j] = 0;
+const standardGoban = () => {
+    let goban = new Array(19);
+    for (let i = 0; i < goban.length; i++) {
+        goban[i] = new Array(19);
+        for (let j = 0; j < goban[i].length; j++) {
+            goban[i][j] = 0;
+        }
     }
+    return goban;
+}
+
+const smallerGoban = () => {
+    let goban = new Array(13);
+    for (let i = 0; i < goban.length; i++) {
+        goban[i] = new Array(13);
+        for (let j = 0; j < goban[i].length; j++) {
+            goban[i][j] = 0;
+        }
+    }
+    return goban;
+}
+
+const smallestGoban = () => {
+    let goban = new Array(9);
+    for (let i = 0; i < goban.length; i++) {
+        goban[i] = new Array(9);
+        for (let j = 0; j < goban[i].length; j++) {
+            goban[i][j] = 0;
+        }
+    }
+    return goban;
 }
 
 const BOARD_STYLES = {
@@ -29,95 +54,150 @@ const BOARD_STYLES = {
 
 // if constructed, will create a board on the given canvas that is within the given container
 class Board {
-    constructor(canvas, container, boardType=Globals.GOBAN_BOARDS.STANDARD, strokeColor=BOARD_STYLES.MAPLE.stroke) {
-        this.canvas = canvas;
+    constructor(boardCanvas, previewCanvas, container, boardType=Globals.GOBAN_BOARDS.STANDARD, strokeColor=BOARD_STYLES.MAPLE.stroke) {
+        this.boardCanvas = boardCanvas;
+        this.previewCanvas = previewCanvas;
         this.container = container;
         this.containerWidth = container.clientWidth;
         this.boardType = boardType;
         this.strokeColor = strokeColor;
-        this.squareWidth = undefined;
+        this.measurements = { squareWidth: undefined, padding: undefined };
 
-        if (this.canvas) {
-            this.ctx = this.canvas.getContext('2d');
-            this.ctx.clearRect(0, 0, canvas.width, canvas.height);
-            this.ctx.webkitImageSmoothingEnabled = false;
-            this.ctx.mozImageSmoothingEnabled = false;
-            this.ctx.imageSmoothingEnabled = false;
-            this.squareWidth = drawBoard(this.canvas, this.ctx, this.containerWidth, this.boardType, this.strokeColor);
-            attachMovePreviewListener(this.canvas, this.ctx, this.boardType, this.strokeColor, this.squareWidth, STONE.WHITE);
-            let objectScope = this;
-            window.onresize = function() {
-                this.squareWidth = drawBoard(objectScope.canvas, objectScope.ctx, objectScope.container.clientWidth, objectScope.boardType, objectScope.strokeColor);
-                attachMovePreviewListener(objectScope.canvas, objectScope.ctx, objectScope.boardType, objectScope.strokeColor, this.squareWidth, STONE.WHITE);
-            }
+        this.boardCanvasContext = undefined;
+        this.previewCanvasContext = undefined;
+        this.boardState = undefined;
 
 
-            //.addEventListener('click', function(e) { placeStone() });
+        switch (this.boardType.DIMENSION) {
+            case 19:
+                this.boardState = standardGoban();
+                break;
+            case 13:
+                this.boardState = smallerGoban();
+                break;
+            case 9:
+                this.boardState = smallestGoban();
+                break;
+            default:
+                break;
         }
 
+        if (this.boardCanvas && this.previewCanvas) {
+            this.boardCanvasContext = this.boardCanvas.getContext('2d');
+            this.previewCanvasContext = this.previewCanvas.getContext('2d');
+
+            this.boardCanvasContext.clearRect(0, 0, this.boardCanvas.width, this.boardCanvas.height);
+            this.previewCanvasContext.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+
+            setRandomStoneState(this.boardState) /* TESTING */
+
+            this.measurements = drawBoard(
+                this.boardCanvas,
+                this.boardCanvasContext,
+                this.previewCanvas,
+                this.previewCanvasContext,
+                this.boardState,
+                this.containerWidth,
+                this.boardType,
+                this.strokeColor
+            );
+            attachMovePreviewListener(
+                this.previewCanvas,
+                this.previewCanvasContext,
+                this.boardType,
+                this.strokeColor,
+                this.measurements.squareWidth,
+                this.measurements.padding,
+                STONE.WHITE
+            );
+            let objectScope = this;
+            window.onresize = function() {
+                objectScope.measurements = drawBoard(
+                    objectScope.boardCanvas,
+                    objectScope.boardCanvasContext,
+                    objectScope.previewCanvas,
+                    objectScope.previewCanvasContext,
+                    objectScope.boardState,
+                    objectScope.container.clientWidth,
+                    objectScope.boardType,
+                    objectScope.strokeColor
+                );
+                attachMovePreviewListener(
+                    objectScope.previewCanvas,
+                    objectScope.previewCanvasContext,
+                    objectScope.boardType,
+                    objectScope.strokeColor,
+                    objectScope.measurements.squareWidth,
+                    objectScope.measurements.padding,
+                    STONE.WHITE
+                );
+            }
+        }
     }
 
     toggleTurn(color) {
-        attachMovePreviewListener(this.canvas, this.ctx, this.boardType, this.strokeColor, this.squareWidth, color);
+        attachMovePreviewListener(
+            this.previewCanvas,
+            this.previewCanvasContext,
+            this.boardType,
+            this.strokeColor,
+            this.measurements.squareWidth,
+            this.measurements.padding,
+            color
+        );
     }
 }
 
 /* draws a board of the given size using the given 2d canvas context */
 function drawBoard(
-    canvas,
-    ctx,
+    boardCanvas,
+    boardCtx,
+    previewCanvas,
+    previewCtx,
+    boardState,
     canvasSize,
     boardParams=Globals.GOBAN_BOARDS.STANDARD,
     lineColor="#000000",
-    previewData={ present: false }
 ) {
-    canvas.height = canvasSize > document.getElementById("boardContainer").clientHeight
+    boardCanvas.height = canvasSize > document.getElementById("boardContainer").clientHeight
         ? document.getElementById("boardContainer").clientHeight
         : canvasSize;
-    canvas.width = canvas.height;
-    ctx.strokeStyle = lineColor;
-    ctx.fillStyle = lineColor;
-    const squareWidth = (canvas.width) / (boardParams.DIMENSION - 1 + (2 * Globals.PADDING_MULTIPLIER));
+    boardCanvas.width = boardCanvas.height;
+
+    previewCanvas.width = boardCanvas.width; // set the canvas for displaying move previews to the same dimensions as the board
+    previewCanvas.height = boardCanvas.height;
+
+    boardCtx.strokeStyle = lineColor;
+    boardCtx.fillStyle = lineColor;
+    const squareWidth = (boardCanvas.width) / (boardParams.DIMENSION - 1 + (2 * Globals.PADDING_MULTIPLIER));
     const padding = Globals.PADDING_MULTIPLIER * squareWidth; // this many squares worth of padding to the edge of the board
     for (let i = 0; i <= boardParams.DIMENSION; i ++) {
         // start in the middle of the canvas and alternate outwards. first vertically, then horizontally.
         if (i % 2 === 0) {
-            ctx.beginPath()
-            ctx.moveTo((canvas.width / 2) - ((i / 2) * squareWidth), padding);
-            ctx.lineTo((canvas.width / 2) - ((i / 2) * squareWidth), canvas.height - padding);
-            ctx.stroke();
+            boardCtx.beginPath()
+            boardCtx.moveTo((boardCanvas.width / 2) - ((i / 2) * squareWidth), padding);
+            boardCtx.lineTo((boardCanvas.width / 2) - ((i / 2) * squareWidth), boardCanvas.height - padding);
+            boardCtx.stroke();
 
-            ctx.beginPath();
-            ctx.moveTo(padding, (canvas.height / 2) - ((i / 2) * squareWidth));
-            ctx.lineTo(canvas.width - padding, (canvas.height / 2) - ((i / 2) * squareWidth));
-            ctx.stroke();
+            boardCtx.beginPath();
+            boardCtx.moveTo(padding, (boardCanvas.height / 2) - ((i / 2) * squareWidth));
+            boardCtx.lineTo(boardCanvas.width - padding, (boardCanvas.height / 2) - ((i / 2) * squareWidth));
+            boardCtx.stroke();
         } else {
-            ctx.beginPath();
-            ctx.moveTo((canvas.width / 2) + (Math.floor(i / 2) * squareWidth), padding);
-            ctx.lineTo((canvas.width / 2) + (Math.floor(i / 2) * squareWidth), canvas.height - padding);
-            ctx.stroke();
+            boardCtx.beginPath();
+            boardCtx.moveTo((boardCanvas.width / 2) + (Math.floor(i / 2) * squareWidth), padding);
+            boardCtx.lineTo((boardCanvas.width / 2) + (Math.floor(i / 2) * squareWidth), boardCanvas.height - padding);
+            boardCtx.stroke();
 
-            ctx.beginPath();
-            ctx.moveTo(padding, (canvas.height / 2) + (Math.floor(i / 2) * squareWidth));
-            ctx.lineTo(canvas.width - padding, (canvas.height / 2) + (Math.floor(i / 2) * squareWidth));
-            ctx.stroke();
+            boardCtx.beginPath();
+            boardCtx.moveTo(padding, (boardCanvas.height / 2) + (Math.floor(i / 2) * squareWidth));
+            boardCtx.lineTo(boardCanvas.width - padding, (boardCanvas.height / 2) + (Math.floor(i / 2) * squareWidth));
+            boardCtx.stroke();
         }
     }
-    drawStarPoints(ctx, canvas.width, boardParams.DIMENSION, squareWidth, padding);
-    if (previewData.present) {
-        drawPreviewStone(
-            ctx,
-            previewData.color,
-            previewData.x,
-            previewData.y,
-            squareWidth,
-            padding,
-            boardParams.STONE_GRADIENT_RADII,
-            boardParams.STONE_GRADIENT_OFFSET
-        );
-    }
-    return squareWidth;
-    //drawCurrentStoneDistribution(ctx, squareWidth, padding, boardParams.STONE_GRADIENT_RADII, boardParams.STONE_GRADIENT_OFFSET);
+    drawStarPoints(boardCtx, boardCanvas.width, boardParams.DIMENSION, squareWidth, padding);
+    drawCurrentStoneState(boardCtx, boardState, boardParams, padding, squareWidth);
+    return { "squareWidth": squareWidth, "padding": padding };
 }
 
 // TODO: refactor this somehow?
@@ -162,6 +242,36 @@ function drawStarPoint(ctx, x, y) {
     ctx.fill();
 }
 
+function setRandomStoneState(goban) {
+    for (let i = 0; i < goban.length; i++) {
+        for (let j = 0; j < goban[i].length; j++) {
+            if (Math.floor(Math.random() * (4)) === 1) { // make it a bit sparser
+                goban[i][j] = Math.floor(Math.random() * (3));
+            } else {
+                goban[i][j] = 0;
+            }
+        }
+    }
+}
+
+function drawCurrentStoneState(ctx, goban, params, padding, squareWidth) {
+    for (let i = 0; i < params.DIMENSION; i++) {
+        for (let j = 0; j < goban[i].length; j++) {
+            if (goban[i][j] !== 0) {
+                drawStone(
+                    goban[i][j],
+                    ctx,
+                    i * squareWidth,
+                    j * squareWidth,
+                    squareWidth / 2,
+                    padding,
+                    params.STONE_GRADIENT_RADII,
+                    params.STONE_GRADIENT_OFFSET);
+            }
+        }
+    }
+}
+
 function drawPreviewStone(ctx, color, x, y, squareWidth, padding, stoneGradientRadii, stoneGradientOffset) {
     drawStone(
         color,
@@ -183,7 +293,7 @@ function getMousePos(canvas, evt) {
     };
 }
 
-function attachMovePreviewListener(canvas, ctx, boardParams, strokeColor, squareWidth, turnColor) {
+function attachMovePreviewListener(canvas, ctx, boardParams, strokeColor, squareWidth, padding, turnColor) {
     if (canvas.previewListener) { // remove any existing listeners referencing other boards within the same canvas
         canvas.removeEventListener("mousemove", canvas.previewListener, false);
     }
@@ -193,10 +303,20 @@ function attachMovePreviewListener(canvas, ctx, boardParams, strokeColor, square
         const potentialStonePosY = Math.round(mousePos.y / squareWidth - Globals.PADDING_MULTIPLIER);
 
         if ((potentialStonePosX >= 0 && potentialStonePosY >= 0) && (potentialStonePosX < boardParams.DIMENSION && potentialStonePosY < boardParams.DIMENSION)) {
-            drawBoard(canvas, ctx, canvas.width, boardParams, strokeColor, {present: true, color: turnColor, x: potentialStonePosX, y: potentialStonePosY});
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPreviewStone(
+                ctx,
+                turnColor,
+                potentialStonePosX,
+                potentialStonePosY,
+                squareWidth,
+                padding,
+                boardParams.STONE_GRADIENT_RADII,
+                boardParams.STONE_GRADIENT_OFFSET
+            );
             document.getElementById("mousePos").innerText = potentialStonePosX + ', ' + potentialStonePosY;
         } else {
-            drawBoard(canvas, ctx, canvas.width, boardParams, strokeColor, {present: false });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             document.getElementById("mousePos").innerText = 'N/A';
         }
     }, false);
@@ -213,4 +333,4 @@ function drawTestStones(ctx, squareWidth, padding, stoneGradientRadii, stoneGrad
     drawStone(STONE.BLACK, ctx, 2 * squareWidth, 3 * squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
 }
 
-export { BOARD_STYLES, Board }
+export { BOARD_STYLES, Board, standardGoban, smallerGoban, smallestGoban }
