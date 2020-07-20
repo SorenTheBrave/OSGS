@@ -18,8 +18,6 @@ switch(Deno.build.os){
             cmd: ["dir", "scripts\\*.ts", "/b"],
             stdout: "piped"
         });
-        const fileStat = await getScriptFilesRecursive.status();
-        code = fileStat.code;
         break;
 }
 if(!!!getScriptFilesRecursive) { console.error("Something hecked up!!"); Deno.exit(1); }
