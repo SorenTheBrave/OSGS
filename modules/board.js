@@ -93,8 +93,6 @@ class Board {
                     previewCanvas,
                     previewCanvasContext,
                     objectScope.game,
-                    previewCanvas,
-                    previewCanvasContext,
                     boardType,
                     strokeColor,
                     measurements.squareWidth,
