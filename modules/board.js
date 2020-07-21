@@ -1,39 +1,6 @@
 import { Globals } from '../config/globals.js'
 import { drawStone, STONE } from "./stone.js";
-
-
-const standardGoban = () => {
-    let goban = new Array(19);
-    for (let i = 0; i < goban.length; i++) {
-        goban[i] = new Array(19);
-        for (let j = 0; j < goban[i].length; j++) {
-            goban[i][j] = 0;
-        }
-    }
-    return goban;
-}
-
-const smallerGoban = () => {
-    let goban = new Array(13);
-    for (let i = 0; i < goban.length; i++) {
-        goban[i] = new Array(13);
-        for (let j = 0; j < goban[i].length; j++) {
-            goban[i][j] = 0;
-        }
-    }
-    return goban;
-}
-
-const smallestGoban = () => {
-    let goban = new Array(9);
-    for (let i = 0; i < goban.length; i++) {
-        goban[i] = new Array(9);
-        for (let j = 0; j < goban[i].length; j++) {
-            goban[i][j] = 0;
-        }
-    }
-    return goban;
-}
+import { createGame, makePotentialMove } from "./game.js";
 
 const BOARD_STYLES = {
     MAPLE: {
@@ -55,96 +22,85 @@ const BOARD_STYLES = {
 // if constructed, will create a board on the given canvas that is within the given container
 class Board {
     constructor(boardCanvas, previewCanvas, container, boardType=Globals.GOBAN_BOARDS.STANDARD, strokeColor=BOARD_STYLES.MAPLE.stroke) {
-        this.boardCanvas = boardCanvas;
-        this.previewCanvas = previewCanvas;
-        this.container = container;
-        this.containerWidth = container.clientWidth;
-        this.boardType = boardType;
-        this.strokeColor = strokeColor;
-        this.measurements = { squareWidth: undefined, padding: undefined };
+        this.game = createGame(boardType.DIMENSION);
 
-        this.boardCanvasContext = undefined;
-        this.previewCanvasContext = undefined;
-        this.boardState = undefined;
+        if (boardCanvas && previewCanvas) {
+            let boardCanvasContext = boardCanvas.getContext('2d');
+            let previewCanvasContext = previewCanvas.getContext('2d');
 
+            boardCanvasContext.clearRect(0, 0, boardCanvas.width, boardCanvas.height);
+            previewCanvasContext.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
 
-        switch (this.boardType.DIMENSION) {
-            case 19:
-                this.boardState = standardGoban();
-                break;
-            case 13:
-                this.boardState = smallerGoban();
-                break;
-            case 9:
-                this.boardState = smallestGoban();
-                break;
-            default:
-                break;
-        }
+            //setRandomStoneState(this.game.boardState) /* TESTING */
 
-        if (this.boardCanvas && this.previewCanvas) {
-            this.boardCanvasContext = this.boardCanvas.getContext('2d');
-            this.previewCanvasContext = this.previewCanvas.getContext('2d');
-
-            this.boardCanvasContext.clearRect(0, 0, this.boardCanvas.width, this.boardCanvas.height);
-            this.previewCanvasContext.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
-
-            setRandomStoneState(this.boardState) /* TESTING */
-
-            this.measurements = drawBoard(
-                this.boardCanvas,
-                this.boardCanvasContext,
-                this.previewCanvas,
-                this.previewCanvasContext,
-                this.boardState,
-                this.containerWidth,
-                this.boardType,
-                this.strokeColor
+            let measurements = drawBoard(
+                boardCanvas,
+                boardCanvasContext,
+                previewCanvas,
+                previewCanvasContext,
+                this.game,
+                container.clientWidth,
+                boardType,
+                strokeColor
             );
             attachMovePreviewListener(
-                this.previewCanvas,
-                this.previewCanvasContext,
-                this.boardType,
-                this.strokeColor,
-                this.measurements.squareWidth,
-                this.measurements.padding,
-                STONE.WHITE
+                previewCanvas,
+                previewCanvasContext,
+                boardType,
+                strokeColor,
+                measurements.squareWidth,
+                measurements.padding,
+                STONE.BLACK
+            )
+            attachMoveListener(
+                boardCanvas,
+                boardCanvasContext,
+                previewCanvas,
+                previewCanvasContext,
+                this.game,
+                boardType,
+                strokeColor,
+                measurements.squareWidth,
+                measurements.padding,
+                STONE.BLACK
             );
             let objectScope = this;
             window.onresize = function() {
-                objectScope.measurements = drawBoard(
-                    objectScope.boardCanvas,
-                    objectScope.boardCanvasContext,
-                    objectScope.previewCanvas,
-                    objectScope.previewCanvasContext,
-                    objectScope.boardState,
-                    objectScope.container.clientWidth,
-                    objectScope.boardType,
-                    objectScope.strokeColor
+                measurements = drawBoard(
+                    boardCanvas,
+                    boardCanvasContext,
+                    previewCanvas,
+                    previewCanvasContext,
+                    objectScope.game,
+                    container.clientWidth,
+                    boardType,
+                    strokeColor
                 );
                 attachMovePreviewListener(
-                    objectScope.previewCanvas,
-                    objectScope.previewCanvasContext,
-                    objectScope.boardType,
-                    objectScope.strokeColor,
-                    objectScope.measurements.squareWidth,
-                    objectScope.measurements.padding,
-                    STONE.WHITE
+                    previewCanvas,
+                    previewCanvasContext,
+                    boardType,
+                    strokeColor,
+                    measurements.squareWidth,
+                    measurements.padding,
+                    STONE.BLACK
+                )
+                attachMoveListener(
+                    boardCanvas,
+                    boardCanvasContext,
+                    previewCanvas,
+                    previewCanvasContext,
+                    objectScope.game,
+                    previewCanvas,
+                    previewCanvasContext,
+                    boardType,
+                    strokeColor,
+                    measurements.squareWidth,
+                    measurements.padding,
+                    STONE.BLACK
                 );
             }
         }
-    }
-
-    toggleTurn(color) {
-        attachMovePreviewListener(
-            this.previewCanvas,
-            this.previewCanvasContext,
-            this.boardType,
-            this.strokeColor,
-            this.measurements.squareWidth,
-            this.measurements.padding,
-            color
-        );
     }
 }
 
@@ -154,7 +110,7 @@ function drawBoard(
     boardCtx,
     previewCanvas,
     previewCtx,
-    boardState,
+    game,
     canvasSize,
     boardParams=Globals.GOBAN_BOARDS.STANDARD,
     lineColor="#000000",
@@ -196,7 +152,7 @@ function drawBoard(
         }
     }
     drawStarPoints(boardCtx, boardCanvas.width, boardParams.DIMENSION, squareWidth, padding);
-    drawCurrentStoneState(boardCtx, boardState, boardParams, padding, squareWidth);
+    drawCurrentStoneState(boardCtx, game.boardState, boardParams, padding, squareWidth);
     return { "squareWidth": squareWidth, "padding": padding };
 }
 
@@ -242,18 +198,6 @@ function drawStarPoint(ctx, x, y) {
     ctx.fill();
 }
 
-function setRandomStoneState(goban) {
-    for (let i = 0; i < goban.length; i++) {
-        for (let j = 0; j < goban[i].length; j++) {
-            if (Math.floor(Math.random() * (4)) === 1) { // make it a bit sparser
-                goban[i][j] = Math.floor(Math.random() * (3));
-            } else {
-                goban[i][j] = 0;
-            }
-        }
-    }
-}
-
 function drawCurrentStoneState(ctx, goban, params, padding, squareWidth) {
     for (let i = 0; i < params.DIMENSION; i++) {
         for (let j = 0; j < goban[i].length; j++) {
@@ -293,6 +237,26 @@ function getMousePos(canvas, evt) {
     };
 }
 
+function attachMoveListener(boardCanvas, boardCtx, previewCanvas, previewCtx, game, boardParams, strokeColor, squareWidth, padding, turnColor) {
+    if (previewCanvas.moveListener) { // remove any existing listeners referencing other boards within the same canvas
+        previewCanvas.removeEventListener("click", previewCanvas.moveListener, false);
+    }
+    previewCanvas.addEventListener('click', previewCanvas.moveListener = function getMovePosition(e) {
+        const mousePos = getMousePos(previewCanvas, e);
+        const potentialStonePosX = Math.round(mousePos.x / squareWidth - Globals.PADDING_MULTIPLIER);
+        const potentialStonePosY = Math.round(mousePos.y / squareWidth - Globals.PADDING_MULTIPLIER);
+
+        if ((potentialStonePosX >= 0 && potentialStonePosY >= 0) && (potentialStonePosX < boardParams.DIMENSION && potentialStonePosY < boardParams.DIMENSION)) {
+            let madeValidMove = makePotentialMove(game, potentialStonePosX, potentialStonePosY, turnColor);
+            if (madeValidMove) {
+                drawBoard(boardCanvas, boardCtx, previewCanvas, previewCtx, game, boardCanvas.width, boardParams, strokeColor);
+                attachMoveListener(boardCanvas, boardCtx, previewCanvas, previewCtx, game, boardParams, strokeColor, squareWidth, padding, game.turn);
+                attachMovePreviewListener(previewCanvas, previewCtx, boardParams, strokeColor, squareWidth, padding, game.turn);
+            }
+        }
+    }, false);
+}
+
 function attachMovePreviewListener(canvas, ctx, boardParams, strokeColor, squareWidth, padding, turnColor) {
     if (canvas.previewListener) { // remove any existing listeners referencing other boards within the same canvas
         canvas.removeEventListener("mousemove", canvas.previewListener, false);
@@ -322,15 +286,4 @@ function attachMovePreviewListener(canvas, ctx, boardParams, strokeColor, square
     }, false);
 }
 
-function drawTestStones(ctx, squareWidth, padding, stoneGradientRadii, stoneGradientOffset) {
-    // just drawing some random stones
-    drawStone(STONE.BLACK, ctx, squareWidth, squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
-    drawStone(STONE.BLACK, ctx, 0, 0, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
-    drawStone(STONE.WHITE, ctx, 0, squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
-    drawStone(STONE.WHITE, ctx, 2 * squareWidth, squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
-    drawStone(STONE.BLACK, ctx, squareWidth, squareWidth * 2, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
-    drawStone(STONE.WHITE, ctx, 2 * squareWidth, 2 * squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
-    drawStone(STONE.BLACK, ctx, 2 * squareWidth, 3 * squareWidth, squareWidth / 2, padding, stoneGradientRadii, stoneGradientOffset);
-}
-
-export { BOARD_STYLES, Board, standardGoban, smallerGoban, smallestGoban }
+export { BOARD_STYLES, Board }

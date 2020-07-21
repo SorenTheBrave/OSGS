@@ -30,11 +30,6 @@ export class TestBoard {
         if (dimensionSelect) {
             dimensionSelect.addEventListener("change", function() { objectScope.changeBoardDimensions(objectScope.board.boardCanvasContext, objectScope.board.boardCanvas, dimensionSelect) });
         }
-
-        let turnSelect = document.getElementById(this.turnId)
-        if (turnSelect) {
-            turnSelect.addEventListener("change", function() { objectScope.changeBoardTurn(objectScope.board.boardCanvasContext, objectScope.board.boardCanvas, turnSelect) });
-        }
     }
 
     changeBoardStyle(ctx, canvas, styleEl) {
@@ -88,18 +83,5 @@ export class TestBoard {
             currentBoard,
             currentStroke
         );
-    }
-
-    changeBoardTurn(ctx, canvas, turnEl) {
-        switch (turnEl.value) {
-            case "white":
-                this.board.toggleTurn(STONE.WHITE)
-                break;
-            case "black":
-                this.board.toggleTurn(STONE.BLACK)
-                break;
-            default:
-                break;
-        }
     }
 }
