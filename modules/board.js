@@ -23,6 +23,8 @@ const BOARD_STYLES = {
 class Board {
     constructor(boardCanvas, previewCanvas, container, boardType=Globals.GOBAN_BOARDS.STANDARD, strokeColor=BOARD_STYLES.MAPLE.stroke) {
         this.game = createGame(boardType.DIMENSION);
+        this.boardCanvas = boardCanvas;
+        this.boardCanvasContext = boardCanvas.getContext('2d');
 
         if (boardCanvas && previewCanvas) {
             let boardCanvasContext = boardCanvas.getContext('2d');

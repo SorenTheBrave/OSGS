@@ -8,10 +8,9 @@ let currentStroke = BOARD_STYLES.MAPLE.stroke;
 
 export class TestBoard {
 
-    constructor(styleId, dimensionId, turnId) {
+    constructor(styleId, dimensionId) {
         this.styleId = styleId;
         this.dimensionId = dimensionId;
-        this.turnId = turnId;
         this.board = new Board(
             document.getElementById("boardCanvas"),
             document.getElementById("movePreviewCanvas"),
@@ -51,7 +50,6 @@ export class TestBoard {
         }
         canvas.style.setProperty("background-color", currentWood);
         document.getElementById("boardCanvas").innerHTML = "";
-        document.getElementById(this.turnId).value = "white";
         this.board = new Board(
             document.getElementById("boardCanvas"),
             document.getElementById("movePreviewCanvas"),
@@ -75,7 +73,6 @@ export class TestBoard {
             default:
                 break;
         }
-        document.getElementById(this.turnId).value = "white";
         this.board = new Board(
             document.getElementById("boardCanvas"),
             document.getElementById("movePreviewCanvas"),
