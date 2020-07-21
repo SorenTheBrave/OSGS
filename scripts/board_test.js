@@ -15,6 +15,7 @@ export class TestBoard {
             document.getElementById("boardCanvas"),
             document.getElementById("movePreviewCanvas"),
             document.getElementById("boardContainer"),
+            undefined,
             Globals.GOBAN_BOARDS.STANDARD,
             BOARD_STYLES.MAPLE.stroke
         );
@@ -54,6 +55,7 @@ export class TestBoard {
             document.getElementById("boardCanvas"),
             document.getElementById("movePreviewCanvas"),
             document.getElementById("boardContainer"),
+            this.board.game,
             currentBoard,
             currentStroke
         );
@@ -77,6 +79,7 @@ export class TestBoard {
             document.getElementById("boardCanvas"),
             document.getElementById("movePreviewCanvas"),
             document.getElementById("boardContainer"),
+            undefined,
             currentBoard,
             currentStroke
         );

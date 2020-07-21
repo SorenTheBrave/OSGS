@@ -22,7 +22,8 @@ function drawStone(color, ctx, x, y, r, padding, stoneGradientRadii, stoneGradie
     if (color === STONE.WHITE) {
         gradient.addColorStop(0, 'rgba(255, 255, 255, ' + opacity + ')');
         gradient.addColorStop(0.4, 'rgba(230, 230, 230, ' + opacity + ')');
-    } else {
+    }
+    if (color === STONE.BLACK) {
         gradient.addColorStop(0, 'rgba(56, 56, 56,' + opacity + ')');
         gradient.addColorStop(0.4, 'rgba(0, 0, 0,' + opacity + ')');
     }

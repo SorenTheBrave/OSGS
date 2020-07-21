@@ -21,8 +21,10 @@ const BOARD_STYLES = {
 
 // if constructed, will create a board on the given canvas that is within the given container
 class Board {
-    constructor(boardCanvas, previewCanvas, container, boardType=Globals.GOBAN_BOARDS.STANDARD, strokeColor=BOARD_STYLES.MAPLE.stroke) {
-        this.game = createGame(boardType.DIMENSION);
+    constructor(boardCanvas, previewCanvas, container, startingPosition, boardType=Globals.GOBAN_BOARDS.STANDARD, strokeColor=BOARD_STYLES.MAPLE.stroke) {
+        this.game = startingPosition
+            ? startingPosition
+            : createGame(boardType.DIMENSION);
         this.boardCanvas = boardCanvas;
         this.boardCanvasContext = boardCanvas.getContext('2d');
 
@@ -201,7 +203,7 @@ function drawStarPoint(ctx, x, y) {
 function drawCurrentStoneState(ctx, goban, params, padding, squareWidth) {
     for (let i = 0; i < params.DIMENSION; i++) {
         for (let j = 0; j < goban[i].length; j++) {
-            if (goban[i][j] !== 0) {
+            if (goban[i][j] !== -1) {
                 drawStone(
                     goban[i][j],
                     ctx,
