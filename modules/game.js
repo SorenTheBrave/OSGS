@@ -17,59 +17,49 @@ const makePotentialMove = (game, x, y, color) => {
         game.boardState[x][y] = color;
         game.turn = color === STONE.BLACK
             ? STONE.WHITE : STONE.BLACK;
-        const boardStateCopy = game.boardState.map(arr => arr.slice());
-        let liberties = determineStoneLiberties(boardStateCopy, x, y, color);
-        console.log(liberties);
-        return true;
+        const boardStateCopy = game.boardState.map(arr => arr.map(x => { return { value: x, visited: false } }));
+        let stringInfo = { liberties: 0, eyes: 0 };
+        determineLibertiesAndEyes(boardStateCopy, stringInfo, x, y, color);
+        console.log(stringInfo);
+        return stringInfo;
     }
     return false;
 }
 
 const createGame = (boardSize) => {
-    return { "boardState": goban(boardSize), turn: STONE.BLACK }
+    return { "boardState": goban(boardSize), turn: STONE.BLACK, lastMove: undefined }
 }
 
-// recursively determines the liberties remaining for a stone or string of stones
-function determineStoneLiberties(boardState, x, y, color) {
-    boardState[x][y] = Globals.VISITED;
-    let liberties = 0;
-    if (boardState[x][y + 1] && boardState[x][y + 1] !== Globals.VISITED) { // spot below
-        if (boardState[x][y + 1] === color) {
-            liberties += determineStoneLiberties(boardState, x, y + 1, color);
+// recursively determines the liberties and eyes for some stone or string of stones
+function determineLibertiesAndEyes(boardState, stringInfo, x, y, color) {
+    boardState[x][y].visited = true;
+    checkNeighboringStone(boardState, stringInfo, x, y + 1, color);
+    checkNeighboringStone(boardState, stringInfo, x + 1, y, color);
+    checkNeighboringStone(boardState, stringInfo, x, y - 1, color);
+    checkNeighboringStone(boardState, stringInfo, x - 1, y, color);
+    return stringInfo;
+}
+
+function isEye(boardState, x, y, color) {
+    return (!boardState[x][y + 1] || boardState[x][y + 1].value === color)
+        && (!boardState[x + 1] || (boardState[x + 1][y].value === color))
+        && (!boardState[x][y - 1] || boardState[x][y - 1].value === color)
+        && (!boardState[x - 1] || (boardState[x - 1][y].value === color));
+}
+
+function checkNeighboringStone(boardState, stringInfo, x, y, color) {
+    if (boardState[x] && boardState[x][y]) { // spot below
+        if (boardState[x][y].value === color && !boardState[x][y].visited) {
+            stringInfo = determineLibertiesAndEyes(boardState, stringInfo, x, y, color);
         }
-        if (boardState[x][y + 1] === -1)  {
-            liberties ++;
-            boardState[x][y + 1] = Globals.VISITED;
-        }
-    }
-    if (boardState[x + 1] && boardState[x + 1][y] !== Globals.VISITED) { // spot to the right
-        if (boardState[x + 1][y] === color) {
-            liberties += determineStoneLiberties(boardState, x + 1, y, color);
-        }
-        if (boardState[x + 1][y] === -1)  {
-            liberties ++;
-            boardState[x + 1][y] = Globals.VISITED;
-        }
-    }
-    if (boardState[x][y - 1] && boardState[x][y - 1] !== Globals.VISITED) { // spot above
-        if (boardState[x][y - 1] === color) {
-            liberties += determineStoneLiberties(boardState, x, y - 1, color);
-        }
-        if (boardState[x][y - 1] === -1)  {
-            liberties ++;
-            boardState[x][y - 1] = Globals.VISITED;
-        }
-    }
-    if (boardState[x - 1] && boardState[x - 1][y] !== Globals.VISITED) { // spot to the left
-        if (boardState[x - 1][y] === color) {
-            liberties += determineStoneLiberties(boardState, x - 1, y, color);
-        }
-        if (boardState[x - 1][y] === -1)  {
-            liberties ++;
-            boardState[x - 1][y] = Globals.VISITED;
+        if (boardState[x][y].value === -1 && !boardState[x][y].visited)  {
+            stringInfo.liberties ++;
+            stringInfo.eyes = isEye(boardState, x, y, color)
+                ? stringInfo.eyes + 1
+                : stringInfo.eyes;
+            boardState[x][y].visited = true;
         }
     }
-    return liberties;
 }
 
 export { createGame, makePotentialMove };

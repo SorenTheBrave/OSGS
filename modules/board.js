@@ -249,8 +249,10 @@ function attachMoveListener(boardCanvas, boardCtx, previewCanvas, previewCtx, ga
         const potentialStonePosY = Math.round(mousePos.y / squareWidth - Globals.PADDING_MULTIPLIER);
 
         if ((potentialStonePosX >= 0 && potentialStonePosY >= 0) && (potentialStonePosX < boardParams.DIMENSION && potentialStonePosY < boardParams.DIMENSION)) {
-            let madeValidMove = makePotentialMove(game, potentialStonePosX, potentialStonePosY, turnColor);
-            if (madeValidMove) {
+            let moveInfo = makePotentialMove(game, potentialStonePosX, potentialStonePosY, turnColor);
+            if (moveInfo) {
+                document.getElementById("lastMove").innerText = moveInfo.liberties + " Liberties, " + moveInfo.eyes + " Eyes"; /* TODO: THIS IS FOR TESTING */
+                game.lastMove = moveInfo;
                 drawBoard(boardCanvas, boardCtx, previewCanvas, previewCtx, game, boardCanvas.width, boardParams, strokeColor);
                 attachMoveListener(boardCanvas, boardCtx, previewCanvas, previewCtx, game, boardParams, strokeColor, squareWidth, padding, game.turn);
                 attachMovePreviewListener(previewCanvas, previewCtx, boardParams, strokeColor, squareWidth, padding, game.turn);
