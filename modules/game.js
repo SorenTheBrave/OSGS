@@ -48,7 +48,7 @@ function isEye(boardState, x, y, color) {
 }
 
 function checkNeighboringStone(boardState, stringInfo, x, y, color) {
-    if (boardState[x] && boardState[x][y]) { // spot below
+    if (boardState[x] && boardState[x][y]) {
         if (boardState[x][y].value === color && !boardState[x][y].visited) {
             stringInfo = determineLibertiesAndEyes(boardState, stringInfo, x, y, color);
         }
