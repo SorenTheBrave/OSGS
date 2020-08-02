@@ -18,7 +18,7 @@ async function serveFile(req: ServerRequest, filePath: string) {
 
 async function main() {
   const server: Server = serve(":8000");
-  console.log("Visit http://localhost:8000 to view the test server");
+  console.log("Visit http://localhost:8000/index.html to view the test server");
   for await (const req of server) {
     console.log("Got request for: ",req.url);
     try {
@@ -44,27 +44,43 @@ async function routeRequest(req: ServerRequest): Promise<void> {
     return await serveFile(req,"./www/html/index.html");
   }
 
-  // serve static HTML (only allowed from www/html)
-  if (req.url.endsWith(".html")) {
-    const matches = /www\/(.*)\.html/.exec(req.url);
-    if (matches && matches[1]) {
-      const basePath = matches[1].toString();
-      console.log(basePath);
-      const localPath = `./www/${basePath}.html`;
-      Deno.lstatSync(localPath);
-      await serveFile(req, localPath);
-    }
+  // TODO: Handle WebSocket upgrades here
+  // if(req.url.endsWith(".ws")) { ... }
 
-    // serve scripts (only allowed from www/scripts)
-  } else if (req.url.endsWith(".js")) {
-    const matches = /(.*)\.js/.exec(req.url);
-    if (matches && matches[1]) {
-      const basePath = matches[1].toString();
-      console.log(basePath);
-      const localPath = `./www/${basePath}.js`;
-      await serveFile(req, localPath);
-    }
+  // serve static HTML (only allowed from www/html)
+//  if (req.url.endsWith(".html")) {
+
+  // serve all static content under www/
+  const matches = /(.*)\.(html|js|css|ico|png|webmanifest)/.test(req.url);
+  if (matches) {
+    const localPath = `./www${req.url}`;
+    Deno.lstatSync(localPath);
+    await serveFile(req, localPath);
+  } else {
+    console.error("unable to serve request: ",req.url);
+    req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
   }
+
+  //   // serve scripts (only allowed from www/scripts)
+  // } else if (req.url.endsWith(".js")) {
+  //   const matches = /(.*)\.js/.exec(req.url);
+  //   if (matches && matches[1]) {
+  //     const basePath = matches[1].toString();
+  //     console.log(basePath);
+  //     const localPath = `./www/${basePath}.js`;
+  //     await serveFile(req, localPath);
+  //   }
+  //
+  //   // serve static CSS only
+  // } else if (req.url.endsWith(".css")) {
+  //   const matches = /(.*)\.css/.exec(req.url);
+  //   if (matches && matches[1]) {
+  //     const basePath = matches[1].toString();
+  //     console.log(basePath);
+  //     const localPath = `./www/${basePath}.js`;
+  //     await serveFile(req, localPath);
+  //   }
+  // }
 }
 
 function setMIMEType(req: ServerRequest, headers: Headers): void {
@@ -76,6 +92,12 @@ function setMIMEType(req: ServerRequest, headers: Headers): void {
       break;
     case "html":
       headers.set("content-type","text/html");
+      break;
+    case "css":
+      headers.set("content-type","text/css");
+      break;
+    case "png":
+      headers.set("content-type","image/png");
       break;
     default:
       headers.set("content-type","text/plain");

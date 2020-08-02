@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>OSGS Go Server</title>
+    <link rel="stylesheet" href="../styles/board-styles.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="../favicon_io/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="../favicon_io/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="../favicon_io/favicon-16x16.png">
+    <link rel="manifest" href="../favicon_io/site.webmanifest">
 </head>
 <body>
 <div id="boardContainer">
-    <!--
-    <canvas id="boardCanvas" class="board"></canvas>
-    <canvas id="movePreviewCanvas" class="move-preview"></canvas>
     <div id="boardParams">
         <select id="style" name="style">
             <option value="Maple" selected>Maple</option>
@@ -27,9 +29,8 @@
             <span id="lastMove">N/A</span>
         </label>
     </div>
-    -->
 </div>
 <!-- Including play.js will just bootstrap playability by creating one board for now -->
-<script type="module" src="/scripts/play.js"></script>
+<script type="module" src="../scripts/play.js"></script>
 </body>
 </html>
