@@ -1,8 +1,8 @@
-console.log("Scanning scripts folder for files...");
-const scriptFiles = Deno.readDirSync("scripts/");
+console.log(`Scanning ${Deno.cwd()}/scripts folder for files...`);
+const scriptFiles = Deno.readDirSync(`${Deno.cwd()}/scripts`);
 const scriptPaths = resolveScripts(`${Deno.cwd()}/scripts`,scriptFiles);
 let failures = 0;
-const failedCompilations = [];
+const failedCompilations: string[] = [];
 
 function resolveScripts(basePath: string, inputFiles: Iterable<Deno.DirEntry>): string[] {
     const files = [];
@@ -50,17 +50,20 @@ function resolveDir(path: string): string[] {
     return localFiles;
 }
 
-for (const file of scriptPaths) {
+const validScriptPaths = scriptPaths.filter(it => it.endsWith(".js") || it.endsWith(".ts"));
+for (const file of validScriptPaths) {
     const fileSuffix = file.slice(file.lastIndexOf('/')+1);
     const filename = fileSuffix.substring(0,fileSuffix.lastIndexOf("."));
-    const buildProcess = Deno.run({
-        cmd: ["deno", "bundle", file, `www/scripts/${filename}.js`]
+    const [diagnostics, emit] = await Deno.bundle(`scripts/${filename}.ts`,undefined,{
+        lib: ["dom"],
+        allowJs: true
     });
-    const result = await buildProcess.status();
-    if(result.success) {
+    if(diagnostics == null && emit) {
+        Deno.writeTextFileSync(`www/scripts/${filename}.js`,emit);
         console.log(`${file} compiled to www/scripts/${filename}.js` );
     } else {
         console.error("Failed to compile",file,"!");
+        console.error(diagnostics);
         failedCompilations.push(file);
         failures++;
     }
