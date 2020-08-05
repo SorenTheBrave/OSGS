@@ -1,14 +1,21 @@
-import { serve, ServerRequest, Server, listenAndServe } from "https://deno.land/std/http/server.ts";
+import { serve, ServerRequest, Server, listenAndServe, acceptWebSocket, WebSocket } from "./deps.ts";
+import { OSGSSockEvent, routeSocketEvent } from "./mods/sockets.ts";
+
 // TODO: upgrade to listenAndServeTLS for prod only (switch on some kind of config)
+
+/**
+ * Just the basics of web request handling. Any complicated logic should go in a separate file. This module is just for
+ * high-level orchestration of the backend component of the server.
+ */
 
 async function serveFile(req: ServerRequest, filePath: string) {
   const [file, fileInfo] = await Promise.all([Deno.open(filePath), Deno.stat(filePath)]);
   const headers = new Headers();
-  headers.set("content-length",fileInfo.size.toString());
+  headers.set("content-length", fileInfo.size.toString());
   setMIMEType(req, headers);
   const buf = new Uint8Array(fileInfo.size);
   await file.read(buf);
-  console.log("request for ",req.url," completed");
+  console.log("request for ", req.url, " completed");
   req.respond({
     status: 200,
     body: buf,
@@ -20,14 +27,14 @@ async function main() {
   const server: Server = serve(":8000");
   console.log("Visit http://localhost:8000/index.html to view the test server");
   for await (const req of server) {
-    console.log("Got request for: ",req.url);
+    console.log("Got request for: ", req.url);
     try {
       console.log(JSON.stringify(req.headers));
-
+      
       await routeRequest(req);
-      console.log("request for ",req.url," completed");
-    } catch(NotFound) {
-      console.error("unable to serve request: ",req.url);
+      console.log("request for ", req.url, " completed");
+    } catch (NotFound) {
+      console.error("unable to serve request: ", req.url);
       req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
     }
   }
@@ -35,21 +42,54 @@ async function main() {
   // console.log("Visit http://localhost:8000/ to view the test server");
 }
 
-async function routeRequest(req: ServerRequest): Promise<void> {
+async function handleWS(sock: WebSocket): Promise<void> {
+  console.log(`sock opened!`);
+  try {
+    for await (const ev of sock) {
+      if (typeof ev === "string") {
+        const message: OSGSSockEvent = JSON.parse(ev) as OSGSSockEvent;
+        routeSocketEvent(message);
+      } else {
+        throw "WS request was not a string-encoded object!";
+      }
+    }
+  } catch (e) {
+    console.error(`failed to handle ws message: ${e}`);
+    
+    if (!sock.isClosed) {
+      await sock.close(1000).catch(console.error);
+    }
+  }
+}
 
+async function routeRequest(req: ServerRequest): Promise<void> {
+  
   // if (!req.url.startsWith("www/")) {
   //   req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
   // }
-  if(req.url === "/" || req.url === "/index.html") {
-    return await serveFile(req,"./www/html/index.html");
+  if (req.url === "/" || req.url === "/index.html") {
+    return await serveFile(req, "./www/html/index.html");
   }
-
-  // TODO: Handle WebSocket upgrades here
-  // if(req.url.endsWith(".ws")) { ... }
-
+  
+  if (req.url.endsWith(".ws")) {
+    const {conn, r: bufReader, w: bufWriter, headers} = req;
+    acceptWebSocket({
+      conn,
+      bufReader,
+      bufWriter,
+      headers
+    })
+      .then(handleWS)
+      .catch(async (e) => {
+        console.error(`failed to accept websocket: ${e}`);
+        await req.respond({status: 400});
+      });
+  }
+  
+  
   // serve static HTML (only allowed from www/html)
 //  if (req.url.endsWith(".html")) {
-
+  
   // serve all static content under www/
   const matches = /(.*)\.(html|js|css|ico|png|webmanifest)/.test(req.url);
   if (matches) {
@@ -57,10 +97,10 @@ async function routeRequest(req: ServerRequest): Promise<void> {
     Deno.lstatSync(localPath);
     await serveFile(req, localPath);
   } else {
-    console.error("unable to serve request: ",req.url);
+    console.error("unable to serve request: ", req.url);
     req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
   }
-
+  
   //   // serve scripts (only allowed from www/scripts)
   // } else if (req.url.endsWith(".js")) {
   //   const matches = /(.*)\.js/.exec(req.url);
@@ -84,23 +124,23 @@ async function routeRequest(req: ServerRequest): Promise<void> {
 }
 
 function setMIMEType(req: ServerRequest, headers: Headers): void {
-  const extension = req.url.slice(req.url.lastIndexOf(".")+1);
-  switch(extension.toLowerCase()) {
+  const extension = req.url.slice(req.url.lastIndexOf(".") + 1);
+  switch (extension.toLowerCase()) {
     case "js":
       console.log("typed a JS MIME lol");
-      headers.set("content-type","application/javascript");
+      headers.set("content-type", "application/javascript");
       break;
     case "html":
-      headers.set("content-type","text/html");
+      headers.set("content-type", "text/html");
       break;
     case "css":
-      headers.set("content-type","text/css");
+      headers.set("content-type", "text/css");
       break;
     case "png":
-      headers.set("content-type","image/png");
+      headers.set("content-type", "image/png");
       break;
     default:
-      headers.set("content-type","text/plain");
+      headers.set("content-type", "text/plain");
   }
 }
 

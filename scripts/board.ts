@@ -1,4 +1,5 @@
-import type { BoardCanvasPair, BoardSize, Coordinate } from "./play.ts";
+import type { BoardCanvasPair } from "./play.ts";
+import type { BoardSize, Coordinate } from "../mods/game-types.ts";
 
 /**
  * Handle visual elements of updating a goban (creation, playing moves, toggle coordinates, etc.)
@@ -7,37 +8,37 @@ import type { BoardCanvasPair, BoardSize, Coordinate } from "./play.ts";
  */
 
 type BoardStyles = {
-    MAPLE: {
-        background: "#edb87b",
-        stroke: "#000000"
-    },
-    ROSEWOOD: {
-        //background: "#36050b",
-        background: "#6f362c",
-        stroke: "#ffffff"
-    },
-    MAHOGANY: {
-        background: "#b36430",
-        stroke: "#000000"
-    }
+  MAPLE: {
+    background: "#edb87b",
+    stroke: "#000000"
+  },
+  ROSEWOOD: {
+    //background: "#36050b",
+    background: "#6f362c",
+    stroke: "#ffffff"
+  },
+  MAHOGANY: {
+    background: "#b36430",
+    stroke: "#000000"
+  }
 }
 
 function createBoard(container: HTMLDivElement): HTMLCanvasElement {
-    const newBoard = document.createElement("canvas");
-    newBoard.classList.add("board");
-    container.appendChild(newBoard);
-    return newBoard;
+  const newBoard = document.createElement("canvas");
+  newBoard.classList.add("board");
+  container.appendChild(newBoard);
+  return newBoard;
 }
 
 function createBoardOverlay(container: HTMLDivElement): HTMLCanvasElement {
-    const newBoard = document.createElement("canvas");
-    newBoard.classList.add("move-preview");
-    container.appendChild(newBoard);
-    return newBoard;
+  const newBoard = document.createElement("canvas");
+  newBoard.classList.add("move-preview");
+  container.appendChild(newBoard);
+  return newBoard;
 }
 
 function drawNewBoard(board: BoardCanvasPair): void {
-    drawGrid(board.game,board.size);
+  drawGrid(board.game, board.size);
 }
 
 // Just draw the lines based on the given size
@@ -63,15 +64,15 @@ function setBoardPadding(board: BoardCanvasPair): void {
 
 // just visually represent one stone being placed (this should also handle removing captured stones)
 function drawStone(canvas: HTMLCanvasElement, move: Coordinate): void {
-
-
-    // ...
-    // if(thisIsACapturingMove) {
-    //   removeCaptures(canvas, listOfCapturedStones);
-    // }
+  
+  
+  // ...
+  // if(thisIsACapturingMove) {
+  //   removeCaptures(canvas, listOfCapturedStones);
+  // }
 }
 
-function removeCaptures(canvas: HTMLCanvasElement, captured: Array<Coordinates>): void {
+function removeCaptures(canvas: HTMLCanvasElement, captured: Array<Coordinate>): void {
 
 }
 
@@ -100,9 +101,9 @@ function handleMovePreview(e: MouseEvent) {
 // Player clicked the board, trying to make a move. Either refuse and warn for illegal move, or update if legal.
 // Update both server and UI of this (in that order, requiring confirmation)
 function handleMove(e: MouseEvent) {
-    if((e.buttons & 1) === 1) {
-
-    }
+  if ((e.buttons & 1) === 1) {
+  
+  }
 }
 
 // should handle mouse OR kb event where the user indicates they'd like to move backwards in the game tree
