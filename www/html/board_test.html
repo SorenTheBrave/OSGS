@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="../../styles/boardStyles.css"/>
+</head>
+<body>
+    <div id="boardContainer">
+        <canvas id="boardCanvas" class="board"></canvas>
+        <canvas id="movePreviewCanvas" class="move-preview"></canvas>
+        <div id="boardParams">
+            <select id="style" name="style">
+                <option value="Maple" selected>Maple</option>
+                <option value="Rosewood">Rosewood</option>
+                <option value="Mahogany">Mahogany</option>
+            </select>
+            <select id="dimension" name="dimension">
+                <option value="19" selected>19x19</option>
+                <option value="13">13x13</option>
+                <option value="9">9x9</option>
+            </select>
+            <label>Stone coordinates
+                <span id="mousePos">N/A</span>
+            </label>
+        </div>
+    </div>
+    <script type="module" src="../../scripts/board_test.js"></script>
+    <script type="module">
+        import { TestBoard } from "../../scripts/board_test.js";
+        const testBoard = new TestBoard("style", "dimension");
+    </script>
+</body>
+</html>

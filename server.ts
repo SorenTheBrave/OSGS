@@ -8,14 +8,16 @@ import { OSGSSockEvent, routeSocketEvent } from "./mods/sockets.ts";
  * high-level orchestration of the backend component of the server.
  */
 
-async function serveFile(req: ServerRequest, filePath: string) {
+async function serveFile(req: ServerRequest, filePath: string, contentType?: string) {
   const [file, fileInfo] = await Promise.all([Deno.open(filePath), Deno.stat(filePath)]);
   const headers = new Headers();
   headers.set("content-length", fileInfo.size.toString());
   setMIMEType(req, headers);
   const buf = new Uint8Array(fileInfo.size);
   await file.read(buf);
-  console.log("request for ", req.url, " completed");
+  contentType
+      ? headers.set("content-type", contentType)
+      : headers.set("content-type", "text/html");
   req.respond({
     status: 200,
     body: buf,
@@ -29,10 +31,24 @@ async function main() {
   for await (const req of server) {
     console.log("Got request for: ", req.url);
     try {
-      console.log(JSON.stringify(req.headers));
-      
-      await routeRequest(req);
-      console.log("request for ", req.url, " completed");
+// <<<<<<< HEAD
+//       console.log(JSON.stringify(req.headers));
+//
+//       await routeRequest(req);
+//       console.log("request for ", req.url, " completed");
+// =======
+      if (req.url === '/') {
+        await serveFile(req, "./www/html/index.html");
+      } else if (req.url === "/boardtest") {
+        await serveFile(req, "./www/html/board_test.html");
+      } else if (req.url.match(/\/styles\/.*/)) {
+        await serveFile(req, `.${req.url}`, "text/css")
+      } else if (req.url.match(/\/modules\/.*/) || req.url.match(/\/scripts\/.*/) || req.url.match(/\/config\/.*/)) {
+        await serveFile(req, `.${req.url}`, "text/javascript")
+      } else {
+          await serveFile(req, `./www/html${req.url}`);
+      }
+// >>>>>>> board
     } catch (NotFound) {
       console.error("unable to serve request: ", req.url);
       req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
@@ -127,9 +143,9 @@ function setMIMEType(req: ServerRequest, headers: Headers): void {
   const extension = req.url.slice(req.url.lastIndexOf(".") + 1);
   switch (extension.toLowerCase()) {
     case "js":
-      console.log("typed a JS MIME lol");
       headers.set("content-type", "application/javascript");
       break;
+    case "htm":
     case "html":
       headers.set("content-type", "text/html");
       break;
@@ -138,6 +154,9 @@ function setMIMEType(req: ServerRequest, headers: Headers): void {
       break;
     case "png":
       headers.set("content-type", "image/png");
+      break;
+    case "manifest":
+      headers.set("content-type", "application/manifest+json")
       break;
     default:
       headers.set("content-type", "text/plain");
