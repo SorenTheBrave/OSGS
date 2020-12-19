@@ -1,5 +1,5 @@
 import { BOARD_STYLES, Board } from './board.js';
-import { Globals } from "../../config/globals.js";
+import { Globals } from "../config/globals.js";
 import {STONE} from "./stone.js";
 
 let currentBoard = Globals.GOBAN_BOARDS.STANDARD;

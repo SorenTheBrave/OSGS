@@ -8,6 +8,58 @@ import { OSGSSockEvent, routeSocketEvent } from "./mods/sockets.ts";
  * high-level orchestration of the backend component of the server.
  */
 
+
+// Main server loop
+async function main() {
+  const server: Server = serve(":8000");
+  console.log("Visit http://localhost:8000/index.html to view the test server");
+  for await (const req of server) {
+    console.log("Got request for: ", req.url);
+    await routeRequest(req);
+  }
+}
+
+async function routeRequest(req: ServerRequest): Promise<void> {
+  
+  if (req.url === "/" || req.url === "/index.html") {
+    return await serveFile(req, "./www/index.html");
+  }
+  
+  if (req.url.endsWith(".ws")) {
+    const {conn, r: bufReader, w: bufWriter, headers} = req;
+    acceptWebSocket({
+      conn,
+      bufReader,
+      bufWriter,
+      headers
+    })
+      .then(handleWS)
+      .catch(async (e) => {
+        console.error(`failed to accept websocket: ${e}`);
+        await req.respond({status: 400});
+      });
+  }
+  
+  const matches = /(.*)\.(html|js|css|png|svg)/.test(req.url);
+  const isFaviconRequest = /(.*)(\.ico|(16|32|192|512)\.png|\.webmanifest)/.test(req.url);
+  try{
+    if(isFaviconRequest) {
+      const localPath = `./www${req.url}`;
+      Deno.lstatSync(localPath);
+      await serveFile(req, localPath);
+    } else if (matches) {
+      const localPath = `./www${req.url}`;
+      Deno.lstatSync(localPath);
+      await serveFile(req, localPath);
+    } else {
+      await notFoundRequest(req);
+    }
+  } catch (e) {
+    console.error(e);
+    await notFoundRequest(req);
+  }
+}
+
 async function serveFile(req: ServerRequest, filePath: string, contentType?: string) {
   const [file, fileInfo] = await Promise.all([Deno.open(filePath), Deno.stat(filePath)]);
   const headers = new Headers();
@@ -15,9 +67,6 @@ async function serveFile(req: ServerRequest, filePath: string, contentType?: str
   setMIMEType(req, headers);
   const buf = new Uint8Array(fileInfo.size);
   await file.read(buf);
-  contentType
-      ? headers.set("content-type", contentType)
-      : headers.set("content-type", "text/html");
   req.respond({
     status: 200,
     body: buf,
@@ -25,37 +74,32 @@ async function serveFile(req: ServerRequest, filePath: string, contentType?: str
   });
 }
 
-async function main() {
-  const server: Server = serve(":8000");
-  console.log("Visit http://localhost:8000/index.html to view the test server");
-  for await (const req of server) {
-    console.log("Got request for: ", req.url);
-    try {
-// <<<<<<< HEAD
-//       console.log(JSON.stringify(req.headers));
-//
-//       await routeRequest(req);
-//       console.log("request for ", req.url, " completed");
-// =======
-      if (req.url === '/') {
-        await serveFile(req, "./www/html/index.html");
-      } else if (req.url === "/boardtest") {
-        await serveFile(req, "./www/html/board_test.html");
-      } else if (req.url.match(/\/styles\/.*/)) {
-        await serveFile(req, `.${req.url}`, "text/css")
-      } else if (req.url.match(/\/modules\/.*/) || req.url.match(/\/scripts\/.*/) || req.url.match(/\/config\/.*/)) {
-        await serveFile(req, `.${req.url}`, "text/javascript")
-      } else {
-          await serveFile(req, `./www/html${req.url}`);
-      }
-// >>>>>>> board
-    } catch (NotFound) {
-      console.error("unable to serve request: ", req.url);
-      req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
-    }
+function setMIMEType(req: ServerRequest, headers: Headers): void {
+  const extension = req.url.slice(req.url.lastIndexOf(".") + 1);
+  console.log(`extension for ${req.url}: ${extension}`);
+  switch (extension.toLowerCase()) {
+    case "js":
+      headers.set("content-type", "application/javascript");
+      break;
+    case "htm":
+    case "html":
+      headers.set("content-type", "text/html");
+      break;
+    case "css":
+      headers.set("content-type", "text/css");
+      break;
+    case "png":
+      headers.set("content-type", "image/png");
+      break;
+    case "manifest":
+      headers.set("content-type", "application/manifest+json")
+      break;
+    case "ico":
+      headers.set("content-type", "image/x-icon")
+      break;
+    default:
+      headers.set("content-type", "text/plain");
   }
-  // listenAndServe(":8000",)
-  // console.log("Visit http://localhost:8000/ to view the test server");
 }
 
 async function handleWS(sock: WebSocket): Promise<void> {
@@ -78,97 +122,13 @@ async function handleWS(sock: WebSocket): Promise<void> {
   }
 }
 
-async function routeRequest(req: ServerRequest): Promise<void> {
-  
-  // if (!req.url.startsWith("www/")) {
-  //   req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
-  // }
-  if (req.url === "/" || req.url === "/index.html") {
-    return await serveFile(req, "./www/html/index.html");
-  }
-  
-  if (req.url.endsWith(".ws")) {
-    const {conn, r: bufReader, w: bufWriter, headers} = req;
-    acceptWebSocket({
-      conn,
-      bufReader,
-      bufWriter,
-      headers
-    })
-      .then(handleWS)
-      .catch(async (e) => {
-        console.error(`failed to accept websocket: ${e}`);
-        await req.respond({status: 400});
-      });
-  }
-  
-  
-  // serve static HTML (only allowed from www/html)
-//  if (req.url.endsWith(".html")) {
-  
-  // serve all static content under www/
-  const matches = /(.*)\.(html|js|css|ico|png|webmanifest)/.test(req.url);
-  if (matches) {
-    const localPath = `./www${req.url}`;
-    Deno.lstatSync(localPath);
-    await serveFile(req, localPath);
-  } else {
-    console.error("unable to serve request: ", req.url);
-    req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
-  }
-  
-  //   // serve scripts (only allowed from www/scripts)
-  // } else if (req.url.endsWith(".js")) {
-  //   const matches = /(.*)\.js/.exec(req.url);
-  //   if (matches && matches[1]) {
-  //     const basePath = matches[1].toString();
-  //     console.log(basePath);
-  //     const localPath = `./www/${basePath}.js`;
-  //     await serveFile(req, localPath);
-  //   }
-  //
-  //   // serve static CSS only
-  // } else if (req.url.endsWith(".css")) {
-  //   const matches = /(.*)\.css/.exec(req.url);
-  //   if (matches && matches[1]) {
-  //     const basePath = matches[1].toString();
-  //     console.log(basePath);
-  //     const localPath = `./www/${basePath}.js`;
-  //     await serveFile(req, localPath);
-  //   }
-  // }
-}
-
-function setMIMEType(req: ServerRequest, headers: Headers): void {
-  const extension = req.url.slice(req.url.lastIndexOf(".") + 1);
-  switch (extension.toLowerCase()) {
-    case "js":
-      headers.set("content-type", "application/javascript");
-      break;
-    case "htm":
-    case "html":
-      headers.set("content-type", "text/html");
-      break;
-    case "css":
-      headers.set("content-type", "text/css");
-      break;
-    case "png":
-      headers.set("content-type", "image/png");
-      break;
-    case "manifest":
-      headers.set("content-type", "application/manifest+json")
-      break;
-    default:
-      headers.set("content-type", "text/plain");
-  }
-}
-
 function setContentLength(req: ServerRequest, headers: Headers): void {
 
 }
 
-function notFoundRequest(req: ServerRequest): void {
-
+function notFoundRequest(req: ServerRequest): Promise<void> {
+  console.error("Generated 404 for request: ", req.url);
+  return req.respond({body: "<h1>Not found!</h1>", status: 404}); // TODO: Make a real 404 page, serve statically
 }
 
 if (import.meta.main) {

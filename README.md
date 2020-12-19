@@ -7,7 +7,7 @@ Main project goals:
 - Be a completely open source Go platform, doubling as a self-hostable server solution and as a professional
  public-facing site
 - Work with as few dependencies as possible. Use only reputable dependencies.
-- Follow an imperative paradigm (see bottom of this README)
+- Follow an imperative paradigm (see docs/STYLE.md)
 - Align with the Unix philosophy- "Do one thing, and do it well". If you need to build a complicated thing,
   make it out of multiple components built in this same philosophy.
 - Be fully WCAG 2.0 compliant in all major versions (Accessible to those with disabilities)
@@ -25,12 +25,15 @@ For a more in-depth look at the rules, etiquette, and strategy I suggest you plu
 engine of choice. Sensei's Library provides a wide array of resources for those interested in the game.
 
 ## Dev setup
-The server is ready to go out-of-the-box, but because the frontend code is all
-Typecript, it is necessary to compile that code before running the local server, 
-otherwise there won't be much for it to serve. The file `build.sh` is a simple
-shell script wrapper for the command `deno --allow-run --allow-read --allow-write config/build.ts`
-which will compile all `.js` and `.ts` files in that directory to the `www/scripts`
-folder. For this reason, all frontend scripts should be written to that directory.
+The server is ready to go out-of-the-box for now while in early development. To start the server, run:
+
+```
+deno 
+```
+ 
+Concatenation/minification/uglification 
+will come later. For now, all scripts are served via direct path, and this will have to change at some point. Any 
+prospective build process should be written as a native Deno script.
 
 ## Starting the server
 
@@ -61,74 +64,6 @@ When including scripts, exclude the "www" and use relative path, i.e.
 <script type="module" src="../scripts/play.js"></script>
 ```
 this import is appropriate for a source file compiled from path `scripts/play.ts`.
-
-## Style
-
-Prefer imperative programming over Object-Oriented Programming (OOP). By this I mean, code this:
-
-```typescript
-interface Widget {
-  size: number,
-  name: string
-}
-
-function createWidget(name: string, size: number = 5) {
-  return {
-    name: name,
-    size: size
-  } as Widget;
-}
-
-window.addEventListener("load",() => {
-   const defaultWidgets: Array<Widget> = [];
-   defaultWidgets.push(createWidget("Example",5));
-   defaultWidgets.push(createWidget("lorg boi",200));
-   defaultWidgets.push(createWidget("just uno",1));
-    
-    // do something with defaultWidgets, like UI
-});
-```
-
-...instead of this:
-
-```typescript
-class Widget {
-  size: number;
-  name: string;
-  constructor(name: string, size: number = 5) {
-    this.name = name;
-    this.size = size;
-  }
-}
-
-window.addEventListener("load",() => {
-   const defaultWidgets: Array<Widget> = [];
-   defaultWidgets.push(new Widget("Example",5));
-   defaultWidgets.push(new Widget("lorg boi",200));
-   defaultWidgets.push(new Widget("just uno",1));
-    
-    // do something with defaultWidgets, like UI
-});
-```
-
-Deno/Typescript Conventions:
-
-- Prefer functions, interfaces, types, and then classes in that order (try to use only functions & interfaces if possible)
-- Functions are your friend. Type checking is your friend. If you have a func with a ton of primitive parameters,
-  consider making that collection of primitives an interface or type, and accept that as a single param instead.
-- Leverage Typescript's type checking for DOM elements, e.g.  `drawStone(board: HTMLCanvasElement)` will never
-  accidentally try to make a call `.getContext("2d")` on a <div> element because the TS compiler should add a
-  runtime check verifying the prototype of the DOM node. If you type param board as `any`, you discard this benefit.
-- Export all dependencies (anything with a URL in the import statement) in file deps.ts. Reimport from that file where 
-  needed.
-- Use `await`/`async` instead of `Promise`, in accordance with Deno style.
-
-...why? See "Imperative programming" readme in the `docs/` directory.
-
-Formatting/Conventions:
-
-- 2-space indentation (no tabs, use smart tabs or set tab to 2 spaces project-wide)
-- ES6 style imports, with spaces inside the curly's: `import { Type } from "./source.ts"`
 
 #### Imperative programming
 
