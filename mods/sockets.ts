@@ -92,4 +92,5 @@ function wsPanic(reason: string): OSGSSockEvent {
   };
 }
 
-export { SockOps, OSGSSockEvent, routeSocketEvent }
+export { SockOps, routeSocketEvent }
+export type { OSGSSockEvent }

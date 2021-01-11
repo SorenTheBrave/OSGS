@@ -1,5 +1,7 @@
-import { serve, ServerRequest, Server, listenAndServe, acceptWebSocket, WebSocket } from "./deps.ts";
-import { OSGSSockEvent, routeSocketEvent } from "./mods/sockets.ts";
+import { serve, ServerRequest, Server, listenAndServe, acceptWebSocket } from "./deps.ts";
+import type { WebSocket } from "./deps.ts";
+import { routeSocketEvent } from "./mods/sockets.ts";
+import type { OSGSSockEvent } from "./mods/sockets.ts";
 
 // TODO: upgrade to listenAndServeTLS for prod only (switch on some kind of config)
 
