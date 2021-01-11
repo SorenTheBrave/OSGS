@@ -1,6 +1,5 @@
 # OSGS
-An open source Go/Baduk/Weiqi server built with Deno. This means the entire project sits atop one (theoretically)
-cross-platform and single-language codebase. Even the frontend code is written in typescript.
+An open source Go/Baduk/Weiqi server built with Deno.
 
 Main project goals:
 
@@ -25,15 +24,9 @@ For a more in-depth look at the rules, etiquette, and strategy I suggest you plu
 engine of choice. Sensei's Library provides a wide array of resources for those interested in the game.
 
 ## Dev setup
-The server is ready to go out-of-the-box for now while in early development. To start the server, run:
-
-```
-deno 
-```
- 
-Concatenation/minification/uglification 
-will come later. For now, all scripts are served via direct path, and this will have to change at some point. Any 
-prospective build process should be written as a native Deno script.
+The server is ready to go out-of-the-box for now while in early development. Concatenation/minification/uglification will come later. 
+For now, all scripts are served via direct path, and this will have to change at some point. Any 
+prospective build process should be written as a native Deno script. For now, the following section is all that is required to test the server.
 
 ## Starting the server
 
@@ -42,14 +35,6 @@ Deno must be installed and present on PATH. Then:
 
 will begin the server process. This can aslo be achieved by running the `run.sh` script.
 Test out the site by visiting `localhost:8000/index.html`.
-
-## Bundling the frontend code
-
-You can't import typescript in a browser. Because of this, all of the typescript destined for the frontend needs to be compiled prior 
-to launching the server. For the server's uptime, it will serve that one version of the compiled typescript. To do this, a 
-simple shell script is provided (`run.sh`) which can be run on *nix systems natively (Mac included, in theory) and on 
-Windows by using git bash. A separate super simple `build.sh` script is also available that will compile the ts but not 
-start the server.
 
 ## Web standards
 
@@ -63,7 +48,7 @@ When including scripts, exclude the "www" and use relative path, i.e.
 ```html
 <script type="module" src="../scripts/play.js"></script>
 ```
-this import is appropriate for a source file compiled from path `scripts/play.ts`.
+this import is appropriate for a source file that lives in `OSGS/www/scripts/play.js`.
 
 #### Imperative programming
 
@@ -72,4 +57,4 @@ more information.
 
 #### Contributing
 
-Yes.
+Yes. (PRs welcome)
