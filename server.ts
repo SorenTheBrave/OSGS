@@ -26,6 +26,16 @@ async function routeRequest(req: ServerRequest): Promise<void> {
   if (req.url === "/" || req.url === "/index.html") {
     return await serveFile(req, "./www/index.html");
   }
+
+  // // Support for jasmine testing TODO: Limit this to only local env
+  // if(req.url === "/spec.html") {
+  //   return await serveFile(req, "./test/www/SpecRunner.html");
+  // }
+  //
+  // if(req.url.startsWith("/lib/jasmine")) {
+  //   console.log("SERVING " + `./test/www/${req.url}`);
+  //   return await  serveFile(req, `./test/www${req.url}`);
+  // }
   
   if (req.url.endsWith(".ws")) {
     const {conn, r: bufReader, w: bufWriter, headers} = req;
@@ -49,7 +59,9 @@ async function routeRequest(req: ServerRequest): Promise<void> {
       const localPath = `./www${req.url}`;
       Deno.lstatSync(localPath);
       await serveFile(req, localPath);
-    } else if (matches) {
+    } else if(req.url.startsWith("/test")) {
+      await serveFile(req, "./"+req.url);
+    }else if (matches) {
       const localPath = `./www${req.url}`;
       Deno.lstatSync(localPath);
       await serveFile(req, localPath);
@@ -66,9 +78,15 @@ async function serveFile(req: ServerRequest, filePath: string, contentType?: str
   const [file, fileInfo] = await Promise.all([Deno.open(filePath), Deno.stat(filePath)]);
   const headers = new Headers();
   headers.set("content-length", fileInfo.size.toString());
-  setMIMEType(req, headers);
-  const buf = new Uint8Array(fileInfo.size);
-  await file.read(buf);
+  if(contentType) {
+    headers.set("content-type", contentType);
+  } else {
+    setMIMEType(req, headers);
+  }
+  const buf = await Deno.readAll(file);
+  Deno.close(file.rid);
+  // await file.read(buf);
+
   req.respond({
     status: 200,
     body: buf,
@@ -79,29 +97,31 @@ async function serveFile(req: ServerRequest, filePath: string, contentType?: str
 function setMIMEType(req: ServerRequest, headers: Headers): void {
   const extension = req.url.slice(req.url.lastIndexOf(".") + 1);
   console.log(`extension for ${req.url}: ${extension}`);
+  let headerPrefix = "";
   switch (extension.toLowerCase()) {
     case "js":
-      headers.set("content-type", "application/javascript");
+      headerPrefix = "text/javascript";
       break;
     case "htm":
     case "html":
-      headers.set("content-type", "text/html");
+      headerPrefix = "text/html";
       break;
     case "css":
-      headers.set("content-type", "text/css");
+      headerPrefix = "text/css";
       break;
     case "png":
-      headers.set("content-type", "image/png");
+      headerPrefix = "image/png";
       break;
     case "manifest":
-      headers.set("content-type", "application/manifest+json")
+      headerPrefix = "application/manifest+json";
       break;
     case "ico":
-      headers.set("content-type", "image/x-icon")
+      headerPrefix = "image/x-icon";
       break;
     default:
-      headers.set("content-type", "text/plain");
+      headerPrefix = "text/plain";
   }
+  headers.set('Content-Type',`${headerPrefix}; charset=UTF-8`);
 }
 
 async function handleWS(sock: WebSocket): Promise<void> {

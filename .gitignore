@@ -2,4 +2,6 @@
 .vscode/
 defs/*.d.ts
 node_modules/
+test/www/lib/*
+package.json
 package-lock.json
